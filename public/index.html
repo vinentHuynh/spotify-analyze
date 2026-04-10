@@ -1,0 +1,2187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spotify Analyze</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #121212;
+        color: #fff;
+        min-height: 100vh;
+      }
+
+      .header {
+        background: #000;
+        padding: 20px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #282828;
+      }
+
+      .header h1 {
+        color: #1db954;
+        font-size: 24px;
+      }
+
+      .header .profile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #b3b3b3;
+        font-size: 14px;
+      }
+
+      .header .profile img {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+      }
+
+      .login-page {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 80vh;
+        gap: 20px;
+      }
+
+      .login-btn {
+        display: inline-block;
+        background: #1db954;
+        color: #000;
+        padding: 14px 40px;
+        border-radius: 30px;
+        font-weight: 700;
+        font-size: 16px;
+        text-decoration: none;
+        transition:
+          background 0.2s,
+          transform 0.1s;
+      }
+
+      .login-btn:hover {
+        background: #1ed760;
+        transform: scale(1.04);
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        border-bottom: 1px solid #282828;
+        padding-bottom: 12px;
+      }
+
+      .tab {
+        padding: 8px 20px;
+        border-radius: 20px;
+        background: #282828;
+        color: #b3b3b3;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+
+      .tab:hover {
+        color: #fff;
+        background: #333;
+      }
+      .tab.active {
+        background: #1db954;
+        color: #000;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .section-header .cached-info {
+        font-size: 12px;
+        color: #666;
+      }
+
+      .refresh-btn {
+        padding: 6px 18px;
+        border-radius: 16px;
+        background: transparent;
+        color: #b3b3b3;
+        border: 1px solid #404040;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .refresh-btn:hover {
+        color: #fff;
+        border-color: #1db954;
+      }
+      .refresh-btn:disabled {
+        opacity: 0.4;
+        cursor: wait;
+      }
+      .refresh-btn .spinner {
+        display: none;
+      }
+      .refresh-btn.loading .spinner {
+        display: inline-block;
+        animation: spin 0.8s linear infinite;
+      }
+      .refresh-btn.loading .label {
+        display: none;
+      }
+
+      .time-toggle {
+        display: flex;
+        gap: 6px;
+      }
+
+      .time-btn {
+        padding: 6px 16px;
+        border-radius: 16px;
+        background: transparent;
+        color: #b3b3b3;
+        border: 1px solid #404040;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s;
+      }
+
+      .time-btn:hover {
+        color: #fff;
+        border-color: #fff;
+      }
+      .time-btn.active {
+        background: #fff;
+        color: #000;
+        border-color: #fff;
+      }
+
+      .track-list {
+        list-style: none;
+      }
+
+      .track-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 12px;
+        border-radius: 6px;
+        transition: background 0.15s;
+        gap: 14px;
+      }
+
+      .track-item:hover {
+        background: #1a1a1a;
+      }
+
+      .track-rank {
+        width: 28px;
+        text-align: right;
+        color: #b3b3b3;
+        font-size: 15px;
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+      }
+
+      .track-img {
+        width: 48px;
+        height: 48px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        background: #282828;
+      }
+
+      .track-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .track-name {
+        font-size: 15px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .track-meta {
+        font-size: 13px;
+        color: #b3b3b3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .track-duration {
+        color: #b3b3b3;
+        font-size: 13px;
+        flex-shrink: 0;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .track-played-at {
+        color: #b3b3b3;
+        font-size: 12px;
+        flex-shrink: 0;
+        width: 140px;
+        text-align: right;
+      }
+
+      .artist-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 20px;
+      }
+
+      .artist-card {
+        background: #181818;
+        border-radius: 8px;
+        padding: 16px;
+        transition: background 0.2s;
+        cursor: default;
+      }
+
+      .artist-card:hover {
+        background: #282828;
+      }
+
+      .artist-card img {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 12px;
+      }
+
+      .artist-card .name {
+        font-size: 14px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .artist-card .genres {
+        font-size: 12px;
+        color: #b3b3b3;
+        margin-top: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .artist-card .rank {
+        font-size: 12px;
+        color: #1db954;
+        margin-bottom: 8px;
+      }
+
+      .album-grid,
+      .playlist-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 20px;
+      }
+
+      .album-card,
+      .playlist-card {
+        background: #181818;
+        border-radius: 8px;
+        padding: 16px;
+        transition: background 0.2s;
+      }
+
+      .album-card:hover,
+      .playlist-card:hover {
+        background: #282828;
+      }
+
+      .album-card img,
+      .playlist-card img {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 4px;
+        object-fit: cover;
+        margin-bottom: 12px;
+      }
+
+      .album-card .name,
+      .playlist-card .name {
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .album-card .artist,
+      .playlist-card .meta {
+        font-size: 12px;
+        color: #b3b3b3;
+        margin-top: 2px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .stat-card {
+        background: #181818;
+        border-radius: 8px;
+        padding: 20px;
+      }
+
+      .stat-card .label {
+        font-size: 12px;
+        color: #b3b3b3;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .stat-card .value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1db954;
+        margin-top: 4px;
+      }
+
+      /* Affinity score styles */
+      .affinity-list {
+        list-style: none;
+      }
+
+      .affinity-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        border-radius: 8px;
+        transition: background 0.15s;
+        gap: 16px;
+      }
+
+      .affinity-item:hover {
+        background: #1a1a1a;
+      }
+
+      .affinity-score {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: 800;
+        flex-shrink: 0;
+      }
+
+      .affinity-img {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: #282828;
+      }
+
+      .affinity-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .affinity-name {
+        font-size: 15px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .affinity-detail {
+        font-size: 12px;
+        color: #b3b3b3;
+        margin-top: 2px;
+      }
+
+      .affinity-breakdown {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .affinity-breakdown .component {
+        text-align: center;
+        font-size: 10px;
+        color: #666;
+        line-height: 1.4;
+      }
+
+      .affinity-breakdown .component .val {
+        font-size: 13px;
+        color: #b3b3b3;
+        font-weight: 600;
+      }
+
+      .score-filter {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .score-filter-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid #404040;
+        background: transparent;
+        color: #b3b3b3;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 700;
+        transition: all 0.2s;
+      }
+
+      .score-filter-btn:hover {
+        color: #fff;
+        border-color: #fff;
+      }
+      .score-filter-btn.active {
+        background: #1db954;
+        color: #000;
+        border-color: #1db954;
+      }
+
+      .playlist-gen {
+        background: #181818;
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: flex-end;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .playlist-gen .field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .playlist-gen .field label {
+        font-size: 11px;
+        color: #b3b3b3;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .playlist-gen input[type='text'],
+      .playlist-gen input[type='number'],
+      .playlist-gen select {
+        background: #282828;
+        border: 1px solid #404040;
+        border-radius: 6px;
+        color: #fff;
+        padding: 8px 12px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .playlist-gen input:focus,
+      .playlist-gen select:focus {
+        border-color: #1db954;
+      }
+      .playlist-gen input[type='number'] {
+        width: 70px;
+      }
+      .playlist-gen input[type='text'] {
+        width: 200px;
+      }
+
+      .exclude-wrap {
+        position: relative;
+        width: 240px;
+      }
+      .exclude-toggle {
+        background: #282828;
+        border: 1px solid #404040;
+        border-radius: 6px;
+        color: #fff;
+        padding: 8px 12px;
+        font-size: 14px;
+        cursor: pointer;
+        width: 100%;
+        text-align: left;
+        outline: none;
+        transition: border-color 0.2s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .exclude-toggle:focus {
+        border-color: #1db954;
+      }
+      .exclude-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #282828;
+        border: 1px solid #404040;
+        border-radius: 6px;
+        max-height: 240px;
+        overflow-y: auto;
+        z-index: 100;
+        margin-top: 4px;
+      }
+      .exclude-dropdown.open {
+        display: block;
+      }
+      .exclude-search {
+        width: 100%;
+        box-sizing: border-box;
+        background: #1a1a1a;
+        border: none;
+        border-bottom: 1px solid #404040;
+        color: #fff;
+        padding: 8px 12px;
+        font-size: 13px;
+        outline: none;
+        position: sticky;
+        top: 0;
+      }
+      .exclude-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 13px;
+        color: #ccc;
+        transition: background 0.15s;
+      }
+      .exclude-option:hover {
+        background: #333;
+      }
+      .exclude-option input {
+        accent-color: #1db954;
+      }
+      .exclude-option .score-pip {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+
+      .gen-btn {
+        padding: 10px 28px;
+        border-radius: 24px;
+        background: #1db954;
+        color: #000;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 700;
+        transition: all 0.2s;
+      }
+
+      .gen-btn:hover {
+        background: #1ed760;
+        transform: scale(1.03);
+      }
+      .gen-btn:disabled {
+        opacity: 0.4;
+        cursor: wait;
+      }
+
+      .gen-result {
+        background: #181818;
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .gen-result.visible {
+        display: block;
+      }
+
+      .gen-result a {
+        color: #1db954;
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .gen-result a:hover {
+        text-decoration: underline;
+      }
+
+      .breakdown-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 4px 0;
+        font-size: 13px;
+      }
+
+      .breakdown-bar .bar {
+        height: 16px;
+        background: #1db954;
+        border-radius: 3px;
+        transition: width 0.3s;
+      }
+
+      .section {
+        display: none;
+      }
+      .section.active {
+        display: block;
+      }
+
+      .empty-msg {
+        text-align: center;
+        color: #b3b3b3;
+        padding: 60px 20px;
+        font-size: 15px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Spotify Analyze</h1>
+      <div class="profile" id="profile-info"></div>
+    </div>
+
+    <div id="login-page" class="login-page" style="display: none">
+      <h2>Analyze your Spotify listening</h2>
+      <a class="login-btn" href="/login">Login with Spotify</a>
+    </div>
+
+    <div id="app" class="container" style="display: none">
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-tab="recent">Recently Played</button>
+        <button class="tab" data-tab="top-tracks">Top Tracks</button>
+        <button class="tab" data-tab="top-artists">Top Artists</button>
+        <button class="tab" data-tab="saved">Saved Tracks</button>
+        <button class="tab" data-tab="albums">Albums</button>
+        <button class="tab" data-tab="playlists">Playlists</button>
+        <button class="tab" data-tab="affinity">Artist Affinity</button>
+        <button class="tab" data-tab="stats">Listening Stats</button>
+      </div>
+
+      <div class="section active" id="section-recent">
+        <div class="section-header">
+          <span class="cached-info" id="recent-info"></span>
+          <button class="refresh-btn" onclick="refreshSection('recent')">
+            <span class="spinner">&#8635;</span
+            ><span class="label">Refresh</span>
+          </button>
+        </div>
+        <div id="recent-content">
+          <div class="empty-msg">
+            No data yet. Click Refresh to fetch from Spotify.
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="section-top-tracks">
+        <div class="section-header">
+          <div class="time-toggle" id="top-tracks-time">
+            <button class="time-btn active" data-range="short_term">
+              Last 4 Weeks
+            </button>
+            <button class="time-btn" data-range="medium_term">
+              Last 6 Months
+            </button>
+            <button class="time-btn" data-range="long_term">All Time</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="gen-btn" id="tt-create-playlist-btn" style="padding:6px 16px;font-size:13px;">
+              + Create Playlist
+            </button>
+            <button class="refresh-btn" onclick="refreshSection('top-tracks')">
+              <span class="spinner">&#8635;</span
+              ><span class="label">Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Playlist builder panel (hidden by default) -->
+        <div id="tt-playlist-panel" class="playlist-gen" style="display:none;flex-direction:column;gap:16px;">
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
+            <div class="field">
+              <label>Playlist Name</label>
+              <input type="text" id="tt-gen-name" value="My Top Tracks Mix" />
+            </div>
+            <div class="field">
+              <label>Tracks</label>
+              <input type="number" id="tt-gen-size" value="30" min="5" max="100" />
+            </div>
+            <div class="field">
+              <label>Exclude Artists</label>
+              <div class="exclude-wrap" id="tt-exclude-wrap">
+                <button type="button" class="exclude-toggle" id="tt-exclude-toggle">
+                  <span id="tt-exclude-label">None</span>
+                  <span style="font-size:10px">&#9660;</span>
+                </button>
+                <div class="exclude-dropdown" id="tt-exclude-dropdown">
+                  <input type="text" class="exclude-search" id="tt-exclude-search" placeholder="Search artists..." />
+                  <div id="tt-exclude-options"></div>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label>Exclude Albums</label>
+              <div class="exclude-wrap" id="tt-album-exclude-wrap">
+                <button type="button" class="exclude-toggle" id="tt-album-exclude-toggle">
+                  <span id="tt-album-exclude-label">None</span>
+                  <span style="font-size:10px">&#9660;</span>
+                </button>
+                <div class="exclude-dropdown" id="tt-album-exclude-dropdown">
+                  <input type="text" class="exclude-search" id="tt-album-exclude-search" placeholder="Search albums..." />
+                  <div id="tt-album-exclude-options"></div>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="checkbox" id="tt-include-recs" style="accent-color:#1DB954;" />
+                Add Recommendations
+              </label>
+              <div id="tt-rec-count-wrap" style="display:none;margin-top:6px;display:none;">
+                <label style="font-size:11px;color:#b3b3b3;text-transform:uppercase;letter-spacing:0.5px;">Count</label>
+                <input type="number" id="tt-rec-count" value="5" min="1" max="20"
+                  style="width:60px;margin-left:6px;background:#282828;border:1px solid #404040;border-radius:6px;color:#fff;padding:4px 8px;font-size:13px;outline:none;" />
+              </div>
+            </div>
+            <button class="gen-btn" id="tt-preview-btn">Preview Playlist</button>
+          </div>
+          <div style="font-size:12px;color:#666;">
+            70% last 4 weeks &middot; 20% last 6 months &middot; 10% all time &middot; no overlapping tracks &middot; randomized
+          </div>
+        </div>
+
+        <div class="gen-result" id="tt-gen-result"></div>
+        <div id="top-tracks-content"></div>
+      </div>
+
+      <div class="section" id="section-top-artists">
+        <div class="section-header">
+          <div class="time-toggle" id="top-artists-time">
+            <button class="time-btn active" data-range="short_term">
+              Last 4 Weeks
+            </button>
+            <button class="time-btn" data-range="medium_term">
+              Last 6 Months
+            </button>
+            <button class="time-btn" data-range="long_term">All Time</button>
+          </div>
+          <button class="refresh-btn" onclick="refreshSection('top-artists')">
+            <span class="spinner">&#8635;</span
+            ><span class="label">Refresh</span>
+          </button>
+        </div>
+        <div id="top-artists-content"></div>
+      </div>
+
+      <div class="section" id="section-saved">
+        <div class="section-header">
+          <span class="cached-info" id="saved-info"></span>
+          <button class="refresh-btn" onclick="refreshSection('saved')">
+            <span class="spinner">&#8635;</span
+            ><span class="label">Refresh</span>
+          </button>
+        </div>
+        <div id="saved-content"></div>
+      </div>
+
+      <div class="section" id="section-albums">
+        <div class="section-header">
+          <span class="cached-info" id="albums-info"></span>
+          <button class="refresh-btn" onclick="refreshSection('albums')">
+            <span class="spinner">&#8635;</span
+            ><span class="label">Refresh</span>
+          </button>
+        </div>
+        <div id="albums-content"></div>
+      </div>
+
+      <div class="section" id="section-playlists">
+        <div class="section-header">
+          <span class="cached-info" id="playlists-info"></span>
+          <button class="refresh-btn" onclick="refreshSection('playlists')">
+            <span class="spinner">&#8635;</span
+            ><span class="label">Refresh</span>
+          </button>
+        </div>
+        <div id="playlists-content"></div>
+      </div>
+
+      <div class="section" id="section-affinity">
+        <div class="section-header">
+          <div
+            style="
+              display: flex;
+              gap: 8px;
+              align-items: center;
+              flex-wrap: wrap;
+            "
+          >
+            <div class="time-toggle" id="affinity-sort">
+              <button class="time-btn active" data-sort="heat">
+                Hot Right Now
+              </button>
+              <button class="time-btn" data-sort="rewind">
+                Rewind
+              </button>
+            </div>
+          </div>
+          <button class="refresh-btn" onclick="refreshSection('affinity')">
+            <span class="spinner">&#8635;</span
+            ><span class="label">Compute</span>
+          </button>
+        </div>
+        <div class="playlist-gen" id="playlist-gen">
+          <div class="field">
+            <label>Playlist Name</label>
+            <input type="text" id="gen-name" value="Affinity Mix" />
+          </div>
+          <div class="field">
+            <label>Tracks</label>
+            <input type="number" id="gen-size" value="30" min="5" max="100" />
+          </div>
+          <div class="field">
+            <label>Mode</label>
+            <div class="time-toggle" id="gen-mode">
+              <button class="time-btn" data-mode="on_repeat">On Repeat</button>
+              <button class="time-btn active" data-mode="mixed">Mixed</button>
+              <button class="time-btn" data-mode="repeat_rewind">Rewind</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Randomness <span id="randomness-val" style="color:#1DB954;font-weight:700;">30</span></label>
+            <input type="range" id="gen-randomness" min="0" max="100" value="30"
+              style="width:140px;accent-color:#1DB954;cursor:pointer;" />
+          </div>
+          <div class="field">
+            <label>Exclude Artists</label>
+            <div class="exclude-wrap" id="exclude-wrap">
+              <button type="button" class="exclude-toggle" id="exclude-toggle">
+                <span id="exclude-label">None</span>
+                <span style="font-size: 10px">&#9660;</span>
+              </button>
+              <div class="exclude-dropdown" id="exclude-dropdown">
+                <input
+                  type="text"
+                  class="exclude-search"
+                  id="exclude-search"
+                  placeholder="Search artists..."
+                />
+                <div id="exclude-options"></div>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: flex-end">
+            <button class="gen-btn" id="preview-btn" type="button">
+              Preview Playlist
+            </button>
+            <button class="gen-btn" id="gen-btn" onclick="generatePlaylist()">
+              Create Playlist
+            </button>
+          </div>
+          <!-- Playlist Preview Modal -->
+          <div
+            id="preview-modal"
+            style="
+              display: none;
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100vw;
+              height: 100vh;
+              background: #000a;
+              z-index: 1000;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <div
+              style="
+                background: #181818;
+                padding: 32px 24px 24px 24px;
+                border-radius: 12px;
+                max-width: 700px;
+                width: 95vw;
+                max-height: 90vh;
+                overflow-y: auto;
+                position: relative;
+              "
+            >
+              <button
+                id="close-preview"
+                style="
+                  position: absolute;
+                  top: 12px;
+                  right: 16px;
+                  background: none;
+                  border: none;
+                  color: #fff;
+                  font-size: 22px;
+                  cursor: pointer;
+                "
+              >
+                &times;
+              </button>
+              <div id="preview-content"></div>
+              <div style="text-align: right; margin-top: 18px">
+                <button class="gen-btn" id="modal-create-btn">
+                  Create This Playlist
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gen-result" id="gen-result"></div>
+        <div id="affinity-content">
+          <div class="empty-msg">
+            Click Compute to build your listening profile.
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="section-stats">
+        <div id="stats-content"></div>
+      </div>
+    </div>
+
+    <!-- Top Tracks Playlist Preview Modal -->
+    <div id="tt-preview-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000a;z-index:1000;align-items:center;justify-content:center;">
+      <div style="background:#181818;padding:32px 24px 24px 24px;border-radius:12px;max-width:700px;width:95vw;max-height:90vh;overflow-y:auto;position:relative;">
+        <button id="tt-close-preview" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>
+        <div id="tt-preview-content"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;">
+          <button class="refresh-btn" id="tt-modal-refresh-btn">
+            <span class="spinner">&#8635;</span><span class="label">&#8635; Regenerate</span>
+          </button>
+          <button class="gen-btn" id="tt-modal-create-btn">Create This Playlist</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // --- Playlist Preview Logic ---
+      document
+        .getElementById('preview-btn')
+        .addEventListener('click', async () => {
+          const btn = document.getElementById('preview-btn');
+          btn.disabled = true;
+          const previewModal = document.getElementById('preview-modal');
+          const previewContent = document.getElementById('preview-content');
+          previewContent.innerHTML =
+            '<div style="color:#b3b3b3;">Generating preview...</div>';
+          previewModal.style.display = 'flex';
+          try {
+            const body = {
+              size: parseInt(document.getElementById('gen-size').value) || 30,
+              mode: getActiveMode(),
+              randomness: parseInt(document.getElementById('gen-randomness').value),
+              excludeArtists: [...excludedArtistIds],
+            };
+            const res = await fetch('/api/preview-playlist', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              throw new Error(err.error || res.statusText);
+            }
+            const result = await res.json();
+            const maxCount = result.breakdown[0]?.count || 1;
+            const tf = result.timeframeCounts;
+            previewContent.innerHTML = `
+        <div style="font-size:18px;font-weight:700;color:#1DB954;margin-bottom:10px;">Playlist Preview</div>
+        <div style="font-size:14px;color:#b3b3b3;margin-bottom:12px;">
+          ${result.tracks.length} tracks will be added
+        </div>
+        <div style="display:flex;gap:16px;margin-bottom:16px;font-size:13px;">
+          <span style="color:#1DB954;font-weight:600;">${tf.short} recent</span>
+          <span style="color:#FFC107;font-weight:600;">${tf.medium} mid</span>
+          <span style="color:#FF9800;font-weight:600;">${tf.long} deep cuts</span>
+        </div>
+        <div style="font-size:13px;color:#b3b3b3;margin-bottom:8px;">Artist breakdown:</div>
+        ${result.breakdown
+          .map(
+            (b) => `
+          <div class="breakdown-bar">
+            <span style="width:140px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;">${b.artist}</span>
+            <div class="bar" style="width:${(b.count / maxCount) * 200}px;"></div>
+            <span style="color:#b3b3b3;">${b.count}</span>
+          </div>
+        `,
+          )
+          .join('')}
+        <div style="margin:18px 0 8px 0;font-size:14px;color:#b3b3b3;font-weight:600;">Track List:</div>
+        <ul class="track-list">${result.tracks
+          .map((t, i) => {
+            const artists = t.artists?.map((a) => a.name).join(', ') || '';
+            const album = t.album?.name || '';
+            const img =
+              t.album?.images?.[2]?.url || t.album?.images?.[0]?.url || '';
+            return `
+            <li class="track-item">
+              <span class="track-rank">${i + 1}</span>
+              ${img ? `<img class="track-img" src="${img}" alt="">` : '<div class="track-img"></div>'}
+              <div class="track-info">
+                <div class="track-name">${t.name}</div>
+                <div class="track-meta">${artists}${album ? ` &middot; ${album}` : ''}</div>
+              </div>
+              <span class="track-duration">${msToTime(t.duration_ms)}</span>
+            </li>`;
+          })
+          .join('')}</ul>
+      `;
+            // Store preview result for modal create
+            window._lastPreviewBody = body;
+          } catch (err) {
+            previewContent.innerHTML = `<span style="color:#F44336;">Failed: ${err.message}</span>`;
+          }
+          btn.disabled = false;
+        });
+
+      document.getElementById('close-preview').addEventListener('click', () => {
+        document.getElementById('preview-modal').style.display = 'none';
+      });
+
+      document
+        .getElementById('modal-create-btn')
+        .addEventListener('click', async () => {
+          const btn = document.getElementById('modal-create-btn');
+          btn.disabled = true;
+          btn.textContent = 'Creating...';
+          const previewContent = document.getElementById('preview-content');
+          try {
+            const body = window._lastPreviewBody;
+            body.name =
+              document.getElementById('gen-name').value || 'My Mix';
+            const res = await fetch('/api/generate-playlist', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              throw new Error(err.error || res.statusText);
+            }
+            const result = await res.json();
+            previewContent.innerHTML = `<div style="color:#1DB954;font-size:18px;font-weight:700;margin-bottom:10px;">Playlist Created!</div>
+        <div style="font-size:14px;color:#b3b3b3;margin-bottom:12px;">
+          <a href="${result.playlist.url}" target="_blank" rel="noopener">Open in Spotify</a>
+        </div>`;
+          } catch (err) {
+            previewContent.innerHTML = `<span style="color:#F44336;">Failed: ${err.message}</span>`;
+          }
+          btn.disabled = false;
+        });
+      let data = {};
+      const loaded = {};
+
+      async function api(url, method = 'GET') {
+        const res = await fetch(url, { method });
+        if (!res.ok) throw new Error(res.statusText);
+        return res.json();
+      }
+
+      // ── Init ──
+      async function init() {
+        try {
+          const auth = await api('/api/auth-status');
+          if (!auth.authenticated) throw new Error('not authed');
+          document.getElementById('login-page').style.display = 'none';
+          document.getElementById('app').style.display = 'block';
+
+          try {
+            const profile = await api('/api/profile');
+            const img = profile.images?.[0]?.url;
+            document.getElementById('profile-info').innerHTML =
+              `${img ? `<img src="${img}" alt="">` : ''}<span>${profile.display_name}</span>`;
+          } catch {}
+
+          // Load saved artist exclusions
+          await loadExcludedArtists();
+
+          // Load the default active tab from cache
+          loadTab('recent');
+        } catch {
+          document.getElementById('login-page').style.display = 'flex';
+        }
+      }
+
+      // ── Tab switching ──
+      document.getElementById('tabs').addEventListener('click', (e) => {
+        if (!e.target.classList.contains('tab')) return;
+        document
+          .querySelectorAll('.tab')
+          .forEach((t) => t.classList.remove('active'));
+        document
+          .querySelectorAll('.section')
+          .forEach((s) => s.classList.remove('active'));
+        e.target.classList.add('active');
+        const tab = e.target.dataset.tab;
+        document.getElementById(`section-${tab}`).classList.add('active');
+        loadTab(tab);
+      });
+
+      // ── Load tab from cache (no Spotify calls) ──
+      async function loadTab(tab) {
+        if (loaded[tab]) return; // already loaded this session
+        try {
+          switch (tab) {
+            case 'recent':
+              await loadRecent();
+              break;
+            case 'top-tracks':
+              await loadTopTracks();
+              break;
+            case 'top-artists':
+              await loadTopArtists();
+              break;
+            case 'saved':
+              await loadSaved();
+              break;
+            case 'albums':
+              await loadAlbums();
+              break;
+            case 'playlists':
+              await loadPlaylists();
+              break;
+            case 'affinity':
+              await loadAffinity();
+              break;
+            case 'stats':
+              await loadStats();
+              break;
+          }
+          loaded[tab] = true;
+        } catch {}
+      }
+
+      // ── Refresh (hits Spotify via POST, then re-renders) ──
+      async function refreshSection(tab) {
+        const btn = document.querySelector(`#section-${tab} .refresh-btn`);
+        if (btn) {
+          btn.disabled = true;
+          btn.classList.add('loading');
+        }
+
+        try {
+          switch (tab) {
+            case 'recent': {
+              const res = await api('/api/refresh/recently-played', 'POST');
+              document.getElementById('recent-content').innerHTML =
+                renderTrackList(res.data?.items || [], true);
+              break;
+            }
+            case 'top-tracks': {
+              const res = await api('/api/refresh/top-tracks', 'POST');
+              data.topTracks = res.data;
+              const activeRange =
+                document.querySelector('#top-tracks-time .time-btn.active')
+                  ?.dataset.range || 'short_term';
+              renderTopTracks(activeRange);
+              break;
+            }
+            case 'top-artists': {
+              const res = await api('/api/refresh/top-artists', 'POST');
+              data.topArtists = res.data;
+              const activeRange =
+                document.querySelector('#top-artists-time .time-btn.active')
+                  ?.dataset.range || 'short_term';
+              renderTopArtists(activeRange);
+              break;
+            }
+            case 'saved': {
+              const res = await api('/api/refresh/saved-tracks', 'POST');
+              document.getElementById('saved-content').innerHTML =
+                renderTrackList(res.tracks);
+              break;
+            }
+            case 'albums': {
+              const res = await api('/api/refresh/saved-albums', 'POST');
+              renderAlbums(res.albums || [], 'albums-content');
+              break;
+            }
+            case 'playlists': {
+              const res = await api('/api/refresh/playlists', 'POST');
+              renderPlaylists(res.playlists || [], 'playlists-content');
+              break;
+            }
+            case 'affinity': {
+              const res = await api('/api/refresh/affinity', 'POST');
+              data.affinity = res;
+              renderProfile();
+              break;
+            }
+          }
+          loaded[tab] = true;
+        } catch (err) {
+          console.error(`Refresh ${tab} failed:`, err);
+        }
+
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('loading');
+        }
+      }
+
+      // ── Helpers ──
+      function msToTime(ms) {
+        const m = Math.floor(ms / 60000);
+        const s = Math.floor((ms % 60000) / 1000);
+        return `${m}:${s.toString().padStart(2, '0')}`;
+      }
+
+      function timeAgo(dateStr) {
+        const diff = Date.now() - new Date(dateStr).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'just now';
+        if (mins < 60) return `${mins}m ago`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `${hrs}h ago`;
+        return `${Math.floor(hrs / 24)}d ago`;
+      }
+
+      function trackImg(track) {
+        return (
+          track.album?.images?.[2]?.url || track.album?.images?.[0]?.url || ''
+        );
+      }
+
+      function renderTrackList(tracks, showPlayedAt = false) {
+        if (!tracks?.length)
+          return '<div class="empty-msg">No tracks found</div>';
+        return `<ul class="track-list">${tracks
+          .map((t, i) => {
+            const track = t.track || t;
+            const artists = track.artists?.map((a) => a.name).join(', ') || '';
+            const album = track.album?.name || '';
+            const img = trackImg(track);
+            return `
+        <li class="track-item">
+          <span class="track-rank">${i + 1}</span>
+          ${img ? `<img class="track-img" src="${img}" alt="">` : '<div class="track-img"></div>'}
+          <div class="track-info">
+            <div class="track-name">${track.name}</div>
+            <div class="track-meta">${artists}${album ? ` &middot; ${album}` : ''}</div>
+          </div>
+          <span class="track-duration">${msToTime(track.duration_ms)}</span>
+          ${showPlayedAt && t.played_at ? `<span class="track-played-at">${timeAgo(t.played_at)}</span>` : ''}
+        </li>`;
+          })
+          .join('')}</ul>`;
+      }
+
+      function renderAlbums(albums, targetId) {
+        if (!albums.length) {
+          document.getElementById(targetId).innerHTML =
+            '<div class="empty-msg">No saved albums</div>';
+          return;
+        }
+        document.getElementById(targetId).innerHTML = `
+      <div class="album-grid">${albums
+        .map((item) => {
+          const a = item.album || item;
+          const img = a.images?.[1]?.url || a.images?.[0]?.url || '';
+          const artist = a.artists?.map((ar) => ar.name).join(', ') || '';
+          return `
+          <div class="album-card">
+            ${img ? `<img src="${img}" alt="">` : ''}
+            <div class="name">${a.name}</div>
+            <div class="artist">${artist}</div>
+          </div>`;
+        })
+        .join('')}</div>`;
+      }
+
+      function renderPlaylists(playlists, targetId) {
+        if (!playlists.length) {
+          document.getElementById(targetId).innerHTML =
+            '<div class="empty-msg">No playlists found</div>';
+          return;
+        }
+        document.getElementById(targetId).innerHTML = `
+      <div class="playlist-grid">${playlists
+        .map((p) => {
+          const img = p.images?.[0]?.url || '';
+          return `
+          <div class="playlist-card">
+            ${img ? `<img src="${img}" alt="">` : ''}
+            <div class="name">${p.name}</div>
+            <div class="meta">${p.tracks?.total || 0} tracks &middot; ${p.owner?.display_name || ''}</div>
+          </div>`;
+        })
+        .join('')}</div>`;
+      }
+
+      // ── Load from cache ──
+      async function loadRecent() {
+        try {
+          const res = await api('/api/recently-played');
+          document.getElementById('recent-content').innerHTML = renderTrackList(
+            res.data?.items || [],
+            true,
+          );
+        } catch {}
+      }
+
+      async function loadTopTracks() {
+        try {
+          const res = await api('/api/top-tracks');
+          data.topTracks = res.data;
+          renderTopTracks('short_term');
+        } catch {}
+      }
+
+      function renderTopTracks(range) {
+        if (!data.topTracks?.[range]) {
+          document.getElementById('top-tracks-content').innerHTML =
+            '<div class="empty-msg">No data. Click Refresh.</div>';
+          return;
+        }
+        document.getElementById('top-tracks-content').innerHTML =
+          renderTrackList(data.topTracks[range].tracks);
+      }
+
+      async function loadTopArtists() {
+        try {
+          const res = await api('/api/top-artists');
+          data.topArtists = res.data;
+          renderTopArtists('short_term');
+        } catch {}
+      }
+
+      function renderTopArtists(range) {
+        if (!data.topArtists?.[range]) {
+          document.getElementById('top-artists-content').innerHTML =
+            '<div class="empty-msg">No data. Click Refresh.</div>';
+          return;
+        }
+        const artists = data.topArtists[range].artists;
+        if (!artists?.length) {
+          document.getElementById('top-artists-content').innerHTML =
+            '<div class="empty-msg">No artists found</div>';
+          return;
+        }
+        document.getElementById('top-artists-content').innerHTML = `
+      <div class="artist-grid">${artists
+        .map((a, i) => {
+          const img = a.images?.[1]?.url || a.images?.[0]?.url || '';
+          const genres = a.genres?.slice(0, 2).join(', ') || '';
+          return `
+          <div class="artist-card">
+            <div class="rank">#${i + 1}</div>
+            ${img ? `<img src="${img}" alt="">` : ''}
+            <div class="name">${a.name}</div>
+            ${genres ? `<div class="genres">${genres}</div>` : ''}
+          </div>`;
+        })
+        .join('')}</div>`;
+      }
+
+      async function loadSaved() {
+        try {
+          const res = await api('/api/saved-tracks');
+          document.getElementById('saved-content').innerHTML = renderTrackList(
+            res.tracks,
+          );
+        } catch {}
+      }
+
+      async function loadAlbums() {
+        try {
+          const res = await api('/api/saved-albums');
+          renderAlbums(res.albums || [], 'albums-content');
+        } catch {}
+      }
+
+      async function loadPlaylists() {
+        try {
+          const res = await api('/api/playlists');
+          renderPlaylists(res.playlists || [], 'playlists-content');
+        } catch {}
+      }
+
+      async function loadStats() {
+        try {
+          const res = await api('/api/stats');
+          const el = document.getElementById('stats-content');
+          const o = res.overview;
+
+          let html = `<div class="stats-grid">
+        <div class="stat-card"><div class="label">Recent Listening</div><div class="value">${o.recent_listening_minutes} min</div></div>
+        <div class="stat-card"><div class="label">Top Tracks (4wk)</div><div class="value">${o.top_tracks_short}</div></div>
+        <div class="stat-card"><div class="label">Top Tracks (6mo)</div><div class="value">${o.top_tracks_medium}</div></div>
+        <div class="stat-card"><div class="label">Top Tracks (All)</div><div class="value">${o.top_tracks_long}</div></div>
+        <div class="stat-card"><div class="label">Saved Tracks</div><div class="value">${o.saved_tracks}</div></div>
+        <div class="stat-card"><div class="label">Avg Artist Popularity</div><div class="value">${o.avg_artist_popularity}<span style="font-size:14px;color:#b3b3b3">/100</span></div></div>
+        <div class="stat-card"><div class="label">Playlists</div><div class="value">${o.playlists}</div></div>
+        <div class="stat-card"><div class="label">Following</div><div class="value">${o.followed_artists}</div></div>
+      </div>`;
+
+          const hours = res.listening_by_hour || [];
+          const maxH = Math.max(...hours, 1);
+          html += `<h3 style="margin:28px 0 12px;font-size:16px;">Listening Activity by Hour</h3>
+        <div style="display:flex;align-items:flex-end;gap:3px;height:120px;padding:0 4px;">
+          ${hours
+            .map((count, h) => {
+              const pct = (count / maxH) * 100;
+              const label =
+                h === 0
+                  ? '12a'
+                  : h === 12
+                    ? '12p'
+                    : h < 12
+                      ? h + 'a'
+                      : h - 12 + 'p';
+              return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <span style="font-size:10px;color:#b3b3b3">${count || ''}</span>
+              <div style="width:100%;background:#1DB954;border-radius:2px;height:${Math.max(pct, 2)}%;opacity:${count ? 1 : 0.2}"></div>
+              <span style="font-size:9px;color:#666">${h % 3 === 0 ? label : ''}</span>
+            </div>`;
+            })
+            .join('')}
+        </div>`;
+
+          if (res.top_genres?.length) {
+            const maxG = res.top_genres[0].count;
+            html += `<h3 style="margin:28px 0 12px;font-size:16px;">Top Genres</h3>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            ${res.top_genres
+              .map(
+                (g) => `
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span style="width:140px;font-size:13px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${g.genre}</span>
+                <div style="flex:1;background:#282828;border-radius:3px;height:20px;">
+                  <div style="background:#1DB954;border-radius:3px;height:100%;width:${(g.count / maxG) * 100}%;display:flex;align-items:center;padding-left:8px;">
+                    <span style="font-size:11px;color:#000;font-weight:600">${g.count}</span>
+                  </div>
+                </div>
+              </div>`,
+              )
+              .join('')}
+          </div>`;
+          }
+
+          if (res.repeat_tracks?.length) {
+            html += `<h3 style="margin:28px 0 12px;font-size:16px;">On Repeat (Recent)</h3>
+          <ul class="track-list">
+            ${res.repeat_tracks
+              .map(
+                (t, i) => `
+              <li class="track-item">
+                <span class="track-rank">${i + 1}</span>
+                ${t.image ? `<img class="track-img" src="${t.image}" alt="">` : '<div class="track-img"></div>'}
+                <div class="track-info">
+                  <div class="track-name">${t.name}</div>
+                  <div class="track-meta">${t.artist}</div>
+                </div>
+                <span style="color:#1DB954;font-weight:700;font-size:14px;">${t.plays}x</span>
+              </li>`,
+              )
+              .join('')}
+          </ul>`;
+          }
+
+          if (
+            res.decade_breakdown &&
+            Object.keys(res.decade_breakdown).length
+          ) {
+            const decades = Object.entries(res.decade_breakdown).sort((a, b) =>
+              a[0].localeCompare(b[0]),
+            );
+            const maxD = Math.max(...decades.map((d) => d[1]));
+            html += `<h3 style="margin:28px 0 12px;font-size:16px;">Decade Breakdown</h3>
+          <div style="display:flex;align-items:flex-end;gap:12px;height:140px;">
+            ${decades
+              .map(
+                ([decade, count]) => `
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                <span style="font-size:12px;color:#b3b3b3">${count}</span>
+                <div style="width:100%;background:#1DB954;border-radius:4px;height:${(count / maxD) * 100}%"></div>
+                <span style="font-size:12px;color:#b3b3b3">${decade}</span>
+              </div>`,
+              )
+              .join('')}
+          </div>`;
+          }
+
+          el.innerHTML = html;
+        } catch {}
+      }
+
+      // ── Listening Profile ──
+      let currentProfileSort = 'heat';
+
+      async function loadAffinity() {
+        try {
+          const res = await api('/api/affinity');
+          data.affinity = res;
+          renderProfile();
+        } catch {}
+      }
+
+      // heat 0-1 → green gradient; rewind 0-1 → amber gradient
+      function heatColor(v) {
+        if (v > 0.65) return '#1DB954';
+        if (v > 0.35) return '#FFC107';
+        if (v > 0.15) return '#FF9800';
+        return '#666';
+      }
+
+      function renderProfile() {
+        const el = document.getElementById('affinity-content');
+        const artists = data.affinity?.artists;
+        if (!artists?.length) {
+          el.innerHTML =
+            '<div class="empty-msg">Click Compute to build your listening profile from top tracks data.</div>';
+          return;
+        }
+
+        const sorted = [...artists].sort((a, b) =>
+          currentProfileSort === 'rewind'
+            ? b.rewindScore - a.rewindScore
+            : b.heatScore - a.heatScore,
+        );
+
+        const headerColor = currentProfileSort === 'rewind' ? '#FF9800' : '#1DB954';
+        const headerLabel = currentProfileSort === 'rewind'
+          ? `${artists.length} artists sorted by rewind`
+          : `${artists.length} artists sorted by heat`;
+
+        el.innerHTML = `
+          <div style="margin-bottom:14px;font-size:13px;color:${headerColor};font-weight:600;">${headerLabel}</div>
+          <ul class="affinity-list">
+            ${sorted.map((a) => {
+              const hc = heatColor(a.heatScore);
+              const rc = heatColor(a.rewindScore);
+              const detail = [
+                a.recentPlays ? `${a.recentPlays} recent plays` : null,
+                a.shortTracks ? `${a.shortTracks} now` : null,
+                a.mediumTracks ? `${a.mediumTracks} mid` : null,
+                a.longTracks ? `${a.longTracks} deep` : null,
+              ].filter(Boolean).join(' · ');
+              return `
+                <li class="affinity-item">
+                  <div class="affinity-score" style="background:${hc}20;color:${hc};border:2px solid ${hc};font-size:11px;font-weight:700;">
+                    ${Math.round(a.heatScore * 100)}
+                  </div>
+                  ${a.image ? `<img class="affinity-img" src="${a.image}" alt="">` : '<div class="affinity-img"></div>'}
+                  <div class="affinity-info">
+                    <div class="affinity-name">${a.name}</div>
+                    <div class="affinity-detail">${detail}</div>
+                  </div>
+                  <div class="affinity-breakdown">
+                    <div class="component"><div class="val" style="color:${hc}">${Math.round(a.heatScore * 100)}</div>heat</div>
+                    <div class="component"><div class="val" style="color:${rc}">${Math.round(a.rewindScore * 100)}</div>rewind</div>
+                  </div>
+                </li>`;
+            }).join('')}
+          </ul>`;
+      }
+
+      // Sort toggle for profile view
+      document.getElementById('affinity-sort').addEventListener('click', (e) => {
+        const btn = e.target.closest('.time-btn');
+        if (!btn) return;
+        document.querySelectorAll('#affinity-sort .time-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentProfileSort = btn.dataset.sort;
+        renderProfile();
+      });
+
+      // Mode toggle for playlist gen
+      document.getElementById('gen-mode').addEventListener('click', (e) => {
+        const btn = e.target.closest('.time-btn');
+        if (!btn) return;
+        document.querySelectorAll('#gen-mode .time-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+
+      // Randomness slider display
+      document.getElementById('gen-randomness').addEventListener('input', (e) => {
+        document.getElementById('randomness-val').textContent = e.target.value;
+      });
+
+      // ── Exclude Artists Dropdown ──
+      const excludedArtistIds = new Set();
+
+      async function loadExcludedArtists() {
+        try {
+          const ids = await api('/api/excluded-artists');
+          excludedArtistIds.clear();
+          (ids || []).forEach((id) => excludedArtistIds.add(id));
+          updateExcludeLabel();
+          ttUpdateExcludeLabel();
+        } catch {}
+      }
+
+      async function saveExcludedArtists() {
+        try {
+          await fetch('/api/excluded-artists', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([...excludedArtistIds]),
+          });
+        } catch {}
+      }
+
+      function populateExcludeDropdown() {
+        const container = document.getElementById('exclude-options');
+        if (!container) return;
+        const artists = [...(data.affinity?.artists || [])].sort(
+          (a, b) => b.heatScore - a.heatScore || a.name.localeCompare(b.name),
+        );
+        container.innerHTML = artists
+          .map((a) => {
+            const bg = heatColor(a.heatScore);
+            return `<label class="exclude-option" data-name="${a.name.toLowerCase()}">
+              <input type="checkbox" value="${a.id}" ${excludedArtistIds.has(a.id) ? 'checked' : ''} />
+              <span class="score-pip" style="background:${bg}20;color:${bg}">${Math.round(a.heatScore * 100)}</span>
+              <span>${a.name}</span>
+            </label>`;
+          })
+          .join('');
+      }
+
+      function updateExcludeLabel() {
+        const label = document.getElementById('exclude-label');
+        label.textContent = excludedArtistIds.size
+          ? `${excludedArtistIds.size} excluded`
+          : 'None';
+      }
+
+      document.getElementById('exclude-toggle').addEventListener('click', () => {
+        const dd = document.getElementById('exclude-dropdown');
+        const isOpen = dd.classList.toggle('open');
+        if (isOpen) {
+          populateExcludeDropdown();
+          document.getElementById('exclude-search').value = '';
+          document.getElementById('exclude-search').focus();
+        }
+      });
+
+      document.getElementById('exclude-options').addEventListener('change', (e) => {
+        if (e.target.type !== 'checkbox') return;
+        if (e.target.checked) excludedArtistIds.add(e.target.value);
+        else excludedArtistIds.delete(e.target.value);
+        updateExcludeLabel();
+        saveExcludedArtists();
+      });
+
+      document.getElementById('exclude-search').addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        document.querySelectorAll('#exclude-options .exclude-option').forEach((opt) => {
+          opt.style.display = opt.dataset.name.includes(q) ? '' : 'none';
+        });
+      });
+
+      document.addEventListener('click', (e) => {
+        const wrap = document.getElementById('exclude-wrap');
+        if (!wrap.contains(e.target)) {
+          document.getElementById('exclude-dropdown').classList.remove('open');
+        }
+        const ttWrap = document.getElementById('tt-exclude-wrap');
+        if (ttWrap && !ttWrap.contains(e.target)) {
+          document.getElementById('tt-exclude-dropdown').classList.remove('open');
+        }
+        const ttAlbumWrap = document.getElementById('tt-album-exclude-wrap');
+        if (ttAlbumWrap && !ttAlbumWrap.contains(e.target)) {
+          document.getElementById('tt-album-exclude-dropdown').classList.remove('open');
+        }
+      });
+
+      function getActiveMode() {
+        return document.querySelector('#gen-mode .time-btn.active')?.dataset.mode || 'mixed';
+      }
+
+      async function generatePlaylist() {
+        const btn = document.getElementById('gen-btn');
+        const resultEl = document.getElementById('gen-result');
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+        resultEl.className = 'gen-result';
+
+        try {
+          const body = {
+            name: document.getElementById('gen-name').value || 'My Mix',
+            size: parseInt(document.getElementById('gen-size').value) || 30,
+            mode: getActiveMode(),
+            randomness: parseInt(document.getElementById('gen-randomness').value),
+            excludeArtists: [...excludedArtistIds],
+          };
+
+          const res = await fetch('/api/generate-playlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || res.statusText);
+          }
+
+          const result = await res.json();
+          const maxCount = result.breakdown[0]?.count || 1;
+          const tf = result.timeframeCounts;
+
+          resultEl.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+              <span style="font-size:20px;font-weight:700;color:#1DB954;">Playlist Created!</span>
+              <a href="${result.playlist.url}" target="_blank" rel="noopener">Open in Spotify</a>
+            </div>
+            <div style="font-size:14px;color:#b3b3b3;margin-bottom:12px;">
+              ${result.playlist.tracks} tracks added to <strong style="color:#fff">${result.playlist.name}</strong>
+            </div>
+            <div style="display:flex;gap:16px;margin-bottom:16px;font-size:13px;">
+              <span style="color:#1DB954;font-weight:600;">${tf.short} recent</span>
+              <span style="color:#FFC107;font-weight:600;">${tf.medium} mid</span>
+              <span style="color:#FF9800;font-weight:600;">${tf.long} deep cuts</span>
+            </div>
+            <div style="font-size:13px;color:#b3b3b3;margin-bottom:8px;">Artist breakdown:</div>
+            ${result.breakdown.map((b) => `
+              <div class="breakdown-bar">
+                <span style="width:140px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;">${b.artist}</span>
+                <div class="bar" style="width:${(b.count / maxCount) * 200}px;"></div>
+                <span style="color:#b3b3b3;">${b.count}</span>
+              </div>`).join('')}
+          `;
+          resultEl.className = 'gen-result visible';
+        } catch (err) {
+          resultEl.innerHTML = `<span style="color:#F44336;">Failed: ${err.message}</span>`;
+          resultEl.className = 'gen-result visible';
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Create Playlist';
+      }
+
+
+      // ── Top Tracks Playlist Creator ──
+      // excludedArtistIds shares the same Set as excludedArtistIds so both dropdowns stay in sync
+
+      document.getElementById('tt-create-playlist-btn').addEventListener('click', () => {
+        const panel = document.getElementById('tt-playlist-panel');
+        const isHidden = panel.style.display === 'none' || panel.style.display === '';
+        panel.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden) ttPopulateExcludeDropdown();
+      });
+
+      document.getElementById('tt-include-recs').addEventListener('change', (e) => {
+        document.getElementById('tt-rec-count-wrap').style.display = e.target.checked ? 'flex' : 'none';
+        document.getElementById('tt-rec-count-wrap').style.alignItems = 'center';
+      });
+
+      function ttGetArtists() {
+        const artistMap = new Map();
+        ['short_term', 'medium_term', 'long_term'].forEach((range) => {
+          (data.topTracks?.[range]?.tracks || []).forEach((track) => {
+            (track.artists || []).forEach((a) => {
+              if (!artistMap.has(a.id)) {
+                artistMap.set(a.id, {
+                  id: a.id,
+                  name: a.name,
+                });
+              }
+            });
+          });
+        });
+        return [...artistMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      function ttPopulateExcludeDropdown() {
+        const container = document.getElementById('tt-exclude-options');
+        if (!container) return;
+        const artists = ttGetArtists();
+        if (!artists.length) {
+          container.innerHTML = '<div style="padding:10px 12px;font-size:13px;color:#666;">No track data loaded yet</div>';
+          return;
+        }
+        container.innerHTML = artists.map((a) => `
+          <label class="exclude-option" data-name="${a.name.toLowerCase()}">
+            <input type="checkbox" value="${a.id}" ${excludedArtistIds.has(a.id) ? 'checked' : ''} />
+            <span>${a.name}</span>
+          </label>`).join('');
+      }
+
+      function ttUpdateExcludeLabel() {
+        const label = document.getElementById('tt-exclude-label');
+        label.textContent = excludedArtistIds.size ? `${excludedArtistIds.size} excluded` : 'None';
+      }
+
+      document.getElementById('tt-exclude-toggle').addEventListener('click', () => {
+        const dd = document.getElementById('tt-exclude-dropdown');
+        const isOpen = dd.classList.toggle('open');
+        if (isOpen) {
+          ttPopulateExcludeDropdown();
+          document.getElementById('tt-exclude-search').value = '';
+          document.getElementById('tt-exclude-search').focus();
+        }
+      });
+
+      document.getElementById('tt-exclude-options').addEventListener('change', (e) => {
+        if (e.target.type !== 'checkbox') return;
+        if (e.target.checked) excludedArtistIds.add(e.target.value);
+        else excludedArtistIds.delete(e.target.value);
+        ttUpdateExcludeLabel();
+        updateExcludeLabel();
+        saveExcludedArtists();
+      });
+
+      document.getElementById('tt-exclude-search').addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        document.querySelectorAll('#tt-exclude-options .exclude-option').forEach((opt) => {
+          opt.style.display = opt.dataset.name.includes(q) ? '' : 'none';
+        });
+      });
+
+      // ── Exclude Albums Dropdown ──
+      const excludedAlbumIds = new Set();
+
+      function ttGetAlbums() {
+        const albumMap = new Map();
+        ['short_term', 'medium_term', 'long_term'].forEach((range) => {
+          (data.topTracks?.[range]?.tracks || []).forEach((track) => {
+            const a = track.album;
+            if (a?.id && !albumMap.has(a.id)) {
+              albumMap.set(a.id, { id: a.id, name: a.name, type: a.album_type });
+            }
+          });
+        });
+        return [...albumMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      function ttPopulateAlbumDropdown() {
+        const container = document.getElementById('tt-album-exclude-options');
+        if (!container) return;
+        const albums = ttGetAlbums();
+        if (!albums.length) {
+          container.innerHTML = '<div style="padding:10px 12px;font-size:13px;color:#666;">No track data loaded yet</div>';
+          return;
+        }
+        container.innerHTML = albums.map((a) => `
+          <label class="exclude-option" data-name="${a.name.toLowerCase()}">
+            <input type="checkbox" value="${a.id}" ${excludedAlbumIds.has(a.id) ? 'checked' : ''} />
+            <span>${a.name}</span>
+            ${a.type !== 'album' ? `<span style="font-size:10px;color:#666;margin-left:4px;">${a.type}</span>` : ''}
+          </label>`).join('');
+      }
+
+      function ttUpdateAlbumExcludeLabel() {
+        document.getElementById('tt-album-exclude-label').textContent =
+          excludedAlbumIds.size ? `${excludedAlbumIds.size} excluded` : 'None';
+      }
+
+      document.getElementById('tt-album-exclude-toggle').addEventListener('click', () => {
+        const dd = document.getElementById('tt-album-exclude-dropdown');
+        const isOpen = dd.classList.toggle('open');
+        if (isOpen) {
+          ttPopulateAlbumDropdown();
+          document.getElementById('tt-album-exclude-search').value = '';
+          document.getElementById('tt-album-exclude-search').focus();
+        }
+      });
+
+      document.getElementById('tt-album-exclude-options').addEventListener('change', (e) => {
+        if (e.target.type !== 'checkbox') return;
+        if (e.target.checked) excludedAlbumIds.add(e.target.value);
+        else excludedAlbumIds.delete(e.target.value);
+        ttUpdateAlbumExcludeLabel();
+      });
+
+      document.getElementById('tt-album-exclude-search').addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        document.querySelectorAll('#tt-album-exclude-options .exclude-option').forEach((opt) => {
+          opt.style.display = opt.dataset.name.includes(q) ? '' : 'none';
+        });
+      });
+
+      document.getElementById('tt-close-preview').addEventListener('click', () => {
+        document.getElementById('tt-preview-modal').style.display = 'none';
+      });
+
+      document.getElementById('tt-preview-btn').addEventListener('click', async () => {
+        const btn = document.getElementById('tt-preview-btn');
+        btn.disabled = true;
+        btn.textContent = 'Loading...';
+        const modal = document.getElementById('tt-preview-modal');
+        const content = document.getElementById('tt-preview-content');
+        content.innerHTML = '<div style="color:#b3b3b3;">Generating preview...</div>';
+        modal.style.display = 'flex';
+
+        try {
+          const size = parseInt(document.getElementById('tt-gen-size').value) || 30;
+          const includeRecs = document.getElementById('tt-include-recs').checked;
+          const recCount = parseInt(document.getElementById('tt-rec-count').value) || 5;
+
+          const previewBody = {
+            size,
+            excludeArtists: [...excludedArtistIds],
+            excludeAlbums: [...excludedAlbumIds],
+          };
+
+          const res = await fetch('/api/preview-top-tracks-playlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(previewBody),
+          });
+          if (!res.ok) { const e = await res.json(); throw new Error(e.error || res.statusText); }
+          const result = await res.json();
+
+          let recs = [];
+          if (includeRecs && result.tracks.length > 0) {
+            const seedIds = result.tracks.slice(0, 5).map((t) => t.id);
+            const existingIds = result.tracks.map((t) => t.id);
+            try {
+              const recRes = await fetch('/api/recommendations-for-playlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  trackIds: seedIds,
+                  count: recCount,
+                  excludeArtists: [...excludedArtistIds],
+                  excludeAlbums: [...excludedAlbumIds],
+                  existingTrackIds: existingIds,
+                }),
+              });
+              if (recRes.ok) recs = (await recRes.json()).tracks || [];
+            } catch {}
+          }
+
+          window._ttLastPreview = { ...result, recs };
+          ttRenderPreviewContent(result, recs);
+        } catch (err) {
+          content.innerHTML = `<span style="color:#F44336;">Failed: ${err.message}</span>`;
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Preview Playlist';
+      });
+
+      function ttRenderPreviewContent(result, recs) {
+        const content = document.getElementById('tt-preview-content');
+        const tf = result.timeframeCounts;
+        const maxCount = result.breakdown[0]?.count || 1;
+
+        content.innerHTML = `
+          <div style="font-size:18px;font-weight:700;color:#1DB954;margin-bottom:10px;">Playlist Preview</div>
+          <div style="font-size:13px;color:#b3b3b3;margin-bottom:12px;">
+            ${result.tracks.length} tracks${recs.length ? ` + ${recs.length} recommended` : ''} &middot; randomized 70/20/10 split
+          </div>
+          <div style="display:flex;gap:16px;margin-bottom:16px;font-size:13px;flex-wrap:wrap;">
+            <span style="color:#1DB954;font-weight:600;">${tf.short} recent (70%)</span>
+            <span style="color:#FFC107;font-weight:600;">${tf.medium} mid (20%)</span>
+            <span style="color:#FF9800;font-weight:600;">${tf.long} all time (10%)</span>
+            ${recs.length ? `<span style="color:#9C27B0;font-weight:600;">${recs.length} recommended</span>` : ''}
+          </div>
+          <div style="font-size:13px;color:#b3b3b3;margin-bottom:8px;">Artist breakdown:</div>
+          ${result.breakdown.map((b) => `
+            <div class="breakdown-bar">
+              <span style="width:140px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;">${b.artist}</span>
+              <div class="bar" style="width:${(b.count / maxCount) * 200}px;"></div>
+              <span style="color:#b3b3b3;">${b.count}</span>
+            </div>`).join('')}
+          <div style="margin:18px 0 8px;font-size:14px;color:#b3b3b3;font-weight:600;">Track List:</div>
+          <ul class="track-list">
+            ${result.tracks.map((t, i) => {
+              const artists = t.artists?.map((a) => a.name).join(', ') || '';
+              const img = t.album?.images?.[2]?.url || t.album?.images?.[0]?.url || '';
+              const tfColor = t.timeframe === 'short' ? '#1DB954' : t.timeframe === 'medium' ? '#FFC107' : '#FF9800';
+              const tfLabel = t.timeframe === 'short' ? '4wk' : t.timeframe === 'medium' ? '6mo' : 'all';
+              return `<li class="track-item">
+                <span class="track-rank">${i + 1}</span>
+                ${img ? `<img class="track-img" src="${img}" alt="">` : '<div class="track-img"></div>'}
+                <div class="track-info">
+                  <div class="track-name">${t.name}</div>
+                  <div class="track-meta">${artists}</div>
+                </div>
+                <span style="font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;background:${tfColor}20;color:${tfColor};flex-shrink:0;">${tfLabel}</span>
+                <span class="track-duration">${msToTime(t.duration_ms)}</span>
+              </li>`;
+            }).join('')}
+            ${recs.map((t, i) => {
+              const artists = t.artists?.map((a) => a.name).join(', ') || '';
+              const img = t.album?.images?.[2]?.url || t.album?.images?.[0]?.url || '';
+              return `<li class="track-item">
+                <span class="track-rank">${result.tracks.length + i + 1}</span>
+                ${img ? `<img class="track-img" src="${img}" alt="">` : '<div class="track-img"></div>'}
+                <div class="track-info">
+                  <div class="track-name">${t.name}</div>
+                  <div class="track-meta">${artists}</div>
+                </div>
+                <span style="font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;background:#9C27B020;color:#9C27B0;flex-shrink:0;">rec</span>
+                <span class="track-duration">${msToTime(t.duration_ms)}</span>
+              </li>`;
+            }).join('')}
+          </ul>`;
+      }
+
+      document.getElementById('tt-modal-create-btn').addEventListener('click', async () => {
+        const btn = document.getElementById('tt-modal-create-btn');
+        const content = document.getElementById('tt-preview-content');
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+
+        try {
+          const preview = window._ttLastPreview;
+          if (!preview) throw new Error('No preview loaded');
+
+          const allTracks = [...preview.tracks, ...(preview.recs || [])];
+          const trackUris = allTracks.map((t) => t.uri).filter(Boolean);
+
+          const res = await fetch('/api/generate-top-tracks-playlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: document.getElementById('tt-gen-name').value || 'My Top Tracks Mix',
+              trackUris,
+              timeframeCounts: preview.timeframeCounts,
+              breakdown: preview.breakdown,
+            }),
+          });
+          if (!res.ok) { const e = await res.json(); throw new Error(e.error || res.statusText); }
+          const result = await res.json();
+
+          content.innerHTML = `
+            <div style="color:#1DB954;font-size:18px;font-weight:700;margin-bottom:10px;">Playlist Created!</div>
+            <div style="font-size:14px;color:#b3b3b3;margin-bottom:6px;">
+              <a href="${result.playlist.url}" target="_blank" rel="noopener" style="color:#1DB954;font-weight:700;">
+                ${result.playlist.name} — Open in Spotify
+              </a>
+            </div>
+            <div style="font-size:13px;color:#b3b3b3;">${result.playlist.tracks} tracks added</div>`;
+          btn.style.display = 'none';
+          document.getElementById('tt-modal-refresh-btn').style.display = 'none';
+        } catch (err) {
+          content.innerHTML = `<span style="color:#F44336;">Failed: ${err.message}</span>`;
+          btn.disabled = false;
+          btn.textContent = 'Create This Playlist';
+        }
+      });
+
+      document.getElementById('tt-modal-refresh-btn').addEventListener('click', async () => {
+        const btn = document.getElementById('tt-modal-refresh-btn');
+        const content = document.getElementById('tt-preview-content');
+        btn.disabled = true;
+        btn.classList.add('loading');
+        content.innerHTML = '<div style="color:#b3b3b3;">Regenerating...</div>';
+
+        const createBtn = document.getElementById('tt-modal-create-btn');
+        createBtn.style.display = '';
+        createBtn.disabled = false;
+        createBtn.textContent = 'Create This Playlist';
+
+        try {
+          const size = parseInt(document.getElementById('tt-gen-size').value) || 30;
+          const includeRecs = document.getElementById('tt-include-recs').checked;
+          const recCount = parseInt(document.getElementById('tt-rec-count').value) || 5;
+
+          const res = await fetch('/api/preview-top-tracks-playlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ size, excludeArtists: [...excludedArtistIds], excludeAlbums: [...excludedAlbumIds] }),
+          });
+          if (!res.ok) { const e = await res.json(); throw new Error(e.error || res.statusText); }
+          const result = await res.json();
+
+          let recs = [];
+          if (includeRecs && result.tracks.length > 0) {
+            const seedIds = result.tracks.slice(0, 5).map((t) => t.id);
+            const existingIds = result.tracks.map((t) => t.id);
+            try {
+              const recRes = await fetch('/api/recommendations-for-playlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  trackIds: seedIds,
+                  count: recCount,
+                  excludeArtists: [...excludedArtistIds],
+                  excludeAlbums: [...excludedAlbumIds],
+                  existingTrackIds: existingIds,
+                }),
+              });
+              if (recRes.ok) recs = (await recRes.json()).tracks || [];
+            } catch {}
+          }
+
+          window._ttLastPreview = { ...result, recs };
+          ttRenderPreviewContent(result, recs);
+        } catch (err) {
+          content.innerHTML = `<span style="color:#F44336;">Failed: ${err.message}</span>`;
+        }
+
+        btn.disabled = false;
+        btn.classList.remove('loading');
+      });
+
+      // ── Time range toggles ──
+      document
+        .getElementById('top-tracks-time')
+        .addEventListener('click', (e) => {
+          if (!e.target.classList.contains('time-btn')) return;
+          document
+            .querySelectorAll('#top-tracks-time .time-btn')
+            .forEach((b) => b.classList.remove('active'));
+          e.target.classList.add('active');
+          renderTopTracks(e.target.dataset.range);
+        });
+
+      document
+        .getElementById('top-artists-time')
+        .addEventListener('click', (e) => {
+          if (!e.target.classList.contains('time-btn')) return;
+          document
+            .querySelectorAll('#top-artists-time .time-btn')
+            .forEach((b) => b.classList.remove('active'));
+          e.target.classList.add('active');
+          renderTopArtists(e.target.dataset.range);
+        });
+
+      init();
+    </script>
+  </body>
+</html>
